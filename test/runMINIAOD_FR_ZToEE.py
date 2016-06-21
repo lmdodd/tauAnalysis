@@ -1,140 +1,127 @@
 import FWCore.ParameterSet.Config as cms
+import os
+
+
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 #input cmsRun options
 options = VarParsing ('analysis')
-#options.inputFiles = '/store/mc/RunIISpring15DR74/SUSYGluGluToHToTauTau_M-250_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/80000/6EBE4F55-4E03-E511-9FE6-0CC47A13D416.root'
-options.inputFiles = "/store/mc/RunIIFall15DR76/GluGluHToTauTau_M125_13TeV_powheg_pythia8/MINIAODSIM/25nsFlat10to25TSG_76X_mcRun2_asymptotic_v12-v1/50000/04CBAD42-759D-E511-943C-0025905A60F8.root"
-options.outputFile = "MiniAOD_effi.root"
+options.inputFiles = "/store/mc/RunIIFall15MiniAODv2/ZToEE_M_120_200_NNPDF30_13TeV_powheg_herwigpp/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/60000/3E9A0052-7A13-E611-B03F-00259055C990.root"
+options.outputFile = "MiniAOD_FR_ZToEE.root"
 options.parseArguments()
 
 #name the process
 process = cms.Process("TreeProducerFromMiniAOD")
+
+#Make the framework shutup
 process.load('FWCore/MessageService/MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100;
 process.MessageLogger.cerr.threshold = cms.untracked.string('INFO')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
 
 #50 ns global tag for MC replace with 'GR_P_V56' for prompt reco. https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions#Prompt_reconstruction_Global_Tag 
-from Configuration.AlCa.GlobalTag import GlobalTag
-#process.GlobalTag.globaltag = 'MCRUN2_74_V9A'
 process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_v6', '')
 
 #how many events to run over
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
-
+#input files
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles),
 )
 
-
 ##################################################
 # Main
-process.byLooseCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODeffi",
+process.byLooseCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
-    tauID = cms.string("byLooseCombinedIsolationDeltaBetaCorr3Hits"), 
+    electrons = cms.InputTag("slimmedElectrons"),
+    tauID = cms.string("byLooseCombinedIsolationDeltaBetaCorr3Hits"),
     packed = cms.InputTag("packedGenParticles"),
-    pruned = cms.InputTag("prunedGenParticles")
+    pruned = cms.InputTag("prunedGenParticles")                                           
 )
-process.byMediumCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODeffi",
+process.byMediumCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("byMediumCombinedIsolationDeltaBetaCorr3Hits"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.byTightCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODeffi",
+process.byTightCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("byTightCombinedIsolationDeltaBetaCorr3Hits"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-#It tells me that byCombinedIsolationDeltaBetaCorrRaw3Hits is not in the miniAOD
-#process.byCombinedIsolationDeltaBetaCorr3Hits = cms.EDAnalyzer("MiniAODeffi",
- #   vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
-  #  taus = cms.InputTag("slimmedTaus"),
-   # jets = cms.InputTag("slimmedJets"),
-    #tauID = cms.string("byCombinedIsolationDeltaBetaCorrRaw3Hits")
-#)
-#process.ChargedIsoPtSum = cms.EDAnalyzer("MiniAODeffi",
- #   vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
-  #  taus = cms.InputTag("slimmedTaus"),
-   # jets = cms.InputTag("slimmedJets"),
-    #tauID = cms.string("chargedIsoPtSum")
-#)
-process.neutralIsoPtSum= cms.EDAnalyzer("MiniAODeffi",
+process.neutralIsoPtSum= cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("neutralIsoPtSum"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.puCorrPtSum= cms.EDAnalyzer("MiniAODeffi",
+process.puCorrPtSum= cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("puCorrPtSum"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.againstMuonLoose3 = cms.EDAnalyzer("MiniAODeffi",
+process.againstMuonLoose3 = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("againstMuonLoose3"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.againstMuonTight3 = cms.EDAnalyzer("MiniAODeffi",
+process.againstMuonTight3 = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("againstMuonTight3"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.againstElectronVLooseMVA5 = cms.EDAnalyzer("MiniAODeffi",
+process.againstElectronVLooseMVA5 = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("againstElectronVLooseMVA5"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.againstElectronLooseMVA5 = cms.EDAnalyzer("MiniAODeffi",
+process.againstElectronLooseMVA5 = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("againstElectronLooseMVA5"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
-process.againstElectronMediumMVA5 = cms.EDAnalyzer("MiniAODeffi",
+process.againstElectronMediumMVA5 = cms.EDAnalyzer("MiniAODfakeRate_ZToEE",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     taus = cms.InputTag("slimmedTaus"),
-    jets = cms.InputTag("slimmedJets"),
+    electrons = cms.InputTag("slimmedElectrons"),
     tauID = cms.string("againstElectronMediumMVA5"),
     packed = cms.InputTag("packedGenParticles"),
     pruned = cms.InputTag("prunedGenParticles")
 )
 
-###################################################
-#Global sequence
+##################################################
+##Global sequence
 
 process.p = cms.Path(
                      process.byLooseCombinedIsolationDeltaBetaCorr3Hits*
 		     process.byMediumCombinedIsolationDeltaBetaCorr3Hits*
 		     process.byTightCombinedIsolationDeltaBetaCorr3Hits*
- 		     #process.byCombinedIsolationDeltaBetaCorrRaw3Hits*
-		     #process.chargedIsoPtSum*
 		     process.neutralIsoPtSum*
 	 	     process.puCorrPtSum*
 		     process.againstMuonLoose3*
@@ -144,8 +131,9 @@ process.p = cms.Path(
 		     process.againstElectronMediumMVA5
                      )
 
+#output file
 process.TFileService = cms.Service("TFileService",
-        fileName = cms.string(options.outputFile)
+    fileName = cms.string(options.outputFile)
 )
 
 #print out all processes used when running- useful check to see if module ran
